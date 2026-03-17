@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Almanca Modal Fiiller Dart Oyunu</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lucide/0.263.1/umd/lucide.min.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    width: 100%; height: 100vh;
+    background: linear-gradient(to bottom, #111827, #1f2937);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: Arial, sans-serif; overflow: hidden; position: relative;
+  }
+
+  /* TUTORIAL */
+  #tutorial-screen {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    padding: 2rem; max-width: 42rem; width: 100%;
+    border: 4px solid #818cf8;
+  }
+  #tutorial-screen h1 { font-size: 1.875rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 1.5rem; }
+  #tutorial-box {
+    background: rgba(0,0,0,0.3); border-radius: 0.75rem;
+    padding: 1rem; margin-bottom: 1.5rem; height: 280px; overflow-y: auto;
+  }
+  #tutorial-text { color: #fff; font-size: 1rem; white-space: pre-wrap; line-height: 1.6; }
+  #tutorial-btn {
+    width: 100%; font-weight: 700; font-size: 1.25rem;
+    padding: 0.75rem 1.5rem; border-radius: 0.75rem;
+    border: none; cursor: pointer; transition: all 0.2s;
+  }
+  #tutorial-btn.ready {
+    background: linear-gradient(to right, #22c55e, #10b981);
+    color: #fff;
+  }
+  #tutorial-btn.ready:hover { background: linear-gradient(to right, #16a34a, #059669); transform: scale(1.05); }
+  #tutorial-btn.waiting { background: #4b5563; color: #9ca3af; cursor: not-allowed; }
+
+  /* MODE SELECT */
+  #mode-screen {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    padding: 3rem; max-width: 42rem; width: 100%;
+    border: 4px solid #818cf8; text-align: center;
+  }
+  #mode-screen h1 { font-size: 2.25rem; font-weight: 700; color: #fff; margin-bottom: 2rem; }
+  #mode-screen p { font-size: 1.25rem; color: #fff; margin-bottom: 2rem; }
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .mode-btn {
+    font-weight: 700; font-size: 1.5rem; padding: 2rem 1.5rem;
+    border-radius: 0.75rem; border: none; cursor: pointer;
+    color: #fff; transition: all 0.2s; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  }
+  .mode-btn:hover { transform: scale(1.05); }
+  .mode-btn.blue { background: linear-gradient(to right, #3b82f6, #06b6d4); }
+  .mode-btn.green { background: linear-gradient(to right, #22c55e, #10b981); }
+  .mode-btn.orange { background: linear-gradient(to right, #f97316, #ef4444); }
+  .mode-btn.purple { background: linear-gradient(to right, #a855f7, #ec4899); }
+
+  /* GAME SCREEN */
+  #game-screen { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #gameCanvas { border: 4px solid #374151; border-radius: 0.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+
+  /* HUD */
+  #hud {
+    position: absolute; bottom: 2rem; left: 2rem;
+    display: flex; flex-direction: column; gap: 0.75rem; z-index: 10;
+  }
+  .hud-badge {
+    padding: 0.5rem 1rem; border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    display: flex; align-items: center; gap: 0.5rem;
+    font-weight: 700; font-size: 0.875rem; color: #fff;
+  }
+  .hud-badge.score { background: linear-gradient(to right, #7c3aed, #2563eb); }
+  .hud-badge.darts { background: linear-gradient(to right, #4f46e5, #7c3aed); }
+  .hud-badge.timer { background: linear-gradient(to right, #dc2626, #ea580c); }
+  .hud-badge.reset-btn {
+    background: linear-gradient(to right, #ef4444, #ec4899);
+    cursor: pointer; border: none; transition: all 0.2s;
+  }
+  .hud-badge.reset-btn:hover { transform: scale(1.05); }
+
+  /* HINT */
+  #hint-bar {
+    position: absolute; bottom: 13rem;
+    background: rgba(0,0,0,0.7); padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem; display: flex; align-items: center; gap: 1rem; z-index: 10;
+  }
+  #hint-bar p { color: #fff; }
+  #hint-bar span { color: #a78bfa; font-weight: 700; }
+  #hint-close { color: #fff; background: none; border: none; cursor: pointer; font-size: 1.2rem; }
+  #hint-close:hover { color: #f87171; }
+
+  /* JOYSTICK */
+  #joystick-wrap {
+    position: absolute; bottom: 2rem; right: 2rem; z-index: 10;
+  }
+  #joystick-base {
+    width: 9rem; height: 9rem;
+    background: linear-gradient(135deg, #3b82f6, #a855f7, #ec4899);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 4px solid #60a5fa;
+    user-select: none; cursor: pointer; touch-action: none;
+  }
+  #joystick-knob {
+    width: 4rem; height: 4rem;
+    background: linear-gradient(135deg, #fff, #e5e7eb);
+    border-radius: 50%; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 2px solid #93c5fd; pointer-events: none;
+    transition: transform 0.05s;
+  }
+
+  /* QUESTION OVERLAY */
+  #question-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex; align-items: center; justify-content: center; z-index: 20; padding: 1rem;
+  }
+  #question-box {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    padding: 2rem; max-width: 42rem; width: 100%; border: 4px solid #818cf8;
+  }
+  #question-verb {
+    display: inline-block; background: #facc15; color: #111827;
+    padding: 0.5rem 1.5rem; border-radius: 9999px; font-weight: 700; font-size: 1.25rem; margin-bottom: 1rem;
+  }
+  #question-text { font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 1.5rem; }
+  .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .option-btn {
+    padding: 1rem; border-radius: 0.5rem; font-weight: 700; font-size: 1.125rem;
+    cursor: pointer; border: none; transition: all 0.2s; transform-origin: center;
+    background: #fff; color: #111827;
+  }
+  .option-btn:hover:not(:disabled) { background: #f3f4f6; transform: scale(1.05); }
+  .option-btn.correct { background: #22c55e !important; color: #fff !important; }
+  .option-btn.wrong { background: #4b5563 !important; color: #9ca3af !important; }
+  #fill-input {
+    width: 100%; padding: 1rem; border-radius: 0.5rem;
+    font-size: 1.25rem; font-weight: 700; text-align: center; color: #111827;
+    border: none; outline: none; margin-bottom: 1rem;
+  }
+  #fill-input:focus { box-shadow: 0 0 0 4px #facc15; }
+  #submit-btn {
+    width: 100%; background: #facc15; color: #111827;
+    font-weight: 700; font-size: 1.25rem; padding: 1rem 1.5rem;
+    border-radius: 0.5rem; border: none; cursor: pointer; transition: all 0.2s;
+  }
+  #submit-btn:hover { background: #eab308; transform: scale(1.05); }
+  #feedback-box {
+    margin-top: 1.5rem; padding: 1.5rem; border-radius: 0.5rem; text-align: center;
+  }
+  #feedback-box.correct { background: #22c55e; }
+  #feedback-box.wrong { background: #ef4444; }
+  #feedback-box .fb-row { display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+  #feedback-box .fb-title { color: #fff; font-weight: 700; font-size: 1.5rem; }
+  #feedback-box .fb-answer { color: #fff; font-size: 1.25rem; }
+
+  /* GAME OVER */
+  #gameover-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex; align-items: center; justify-content: center; z-index: 20;
+  }
+  #gameover-box {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+    padding: 3rem; max-width: 42rem; width: 100%; border: 4px solid #818cf8; text-align: center;
+  }
+  #gameover-box h2 { font-size: 2.25rem; font-weight: 700; color: #fff; margin: 1.5rem 0 1rem; }
+  #gameover-box p { font-size: 1.875rem; color: #fff; margin-bottom: 2rem; }
+  #gameover-box span { font-weight: 700; color: #fde047; }
+  #newgame-btn {
+    background: linear-gradient(to right, #22c55e, #10b981);
+    color: #fff; font-weight: 700; font-size: 1.25rem;
+    padding: 1rem 2rem; border-radius: 0.5rem; border: none; cursor: pointer; transition: all 0.2s;
+  }
+  #newgame-btn:hover { background: linear-gradient(to right, #16a34a, #059669); transform: scale(1.05); }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div id="tutorial-screen">
+  <h1>📚 Oyun Rehberi</h1>
+  <div id="tutorial-box">
+    <pre id="tutorial-text"></pre>
+  </div>
+  <button id="tutorial-btn" class="waiting" disabled onclick="showModeScreen()">Bekleyin...</button>
+</div>
+
+<div id="mode-screen" class="hidden">
+  <h1>Almanca Modal Fiiller Dart Oyunu</h1>
+  <p>Kaç ok atmak istersiniz?</p>
+  <div class="mode-grid">
+    <button class="mode-btn blue" onclick="startGame(5)">5 Ok</button>
+    <button class="mode-btn green" onclick="startGame(10)">10 Ok</button>
+    <button class="mode-btn orange" onclick="startGame(20)">20 Ok</button>
+    <button class="mode-btn purple" onclick="startGame('timed')">Süreli (2dk) ⏱️</button>
+  </div>
+</div>
+
+<div id="game-screen" class="hidden">
+  <canvas id="gameCanvas" width="800" height="700"></canvas>
+
+  <div id="hud">
+    <div class="hud-badge score">🏆 <span id="score-display">0</span> Puan</div>
+    <div class="hud-badge darts" id="dart-hud">🎯 0/0</div>
+    <button class="hud-badge reset-btn" onclick="resetGame()">↺ Yeniden</button>
+  </div>
+
+  <div id="hint-bar">
+    <p><span>Joystick:</span> Yönü ayarla, merkezden uzaklaştır = daha güçlü atış!</p>
+    <button id="hint-close" onclick="document.getElementById('hint-bar').style.display='none'">✕</button>
+  </div>
+
+  <div id="joystick-wrap">
+    <div id="joystick-base">
+      <div id="joystick-knob"></div>
+    </div>
+  </div>
+
+  <div id="question-overlay" class="hidden">
+    <div id="question-box">
+      <div style="text-align:center;margin-bottom:1.5rem;">
+        <div id="question-verb"></div>
+        <h2 id="question-text"></h2>
+      </div>
+      <div id="options-area"></div>
+      <div id="feedback-box" class="hidden"></div>
+    </div>
+  </div>
+
+  <div id="gameover-overlay" class="hidden">
+    <div id="gameover-box">
+      <div style="font-size:5rem;">🏆</div>
+      <h2 id="gameover-title">Oyun Bitti!</h2>
+      <p>Toplam Puanınız: <span id="final-score">0</span></p>
+      <button id="newgame-btn" onclick="resetGame()">Yeni Oyun Başlat</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+const FULL_TUTORIAL = `🎯 Modal Fiiller Dart Oyunu
+
+🎮 Oynanış:
+• Vurduğun modal fiilin sorusunu cevapla
+
+📊 Puan:
+✓ Doğru: +20  |  ✗ Yanlış: -5  |  🎯 Bullseye: +50
+
+🔴 können - yapabilmek
+🔵 müssen - zorunda olmak  
+🟢 dürfen - izinli olmak
+🟠 sollen - yapması gerekmek
+🟣 wollen - istemek
+🟡 mögen - sevmek`;
+
+const MODAL_VERBS = [
+  { verb: 'können', startAngle: 0,   endAngle: 60,  color: '#FF6B6B' },
+  { verb: 'müssen', startAngle: 60,  endAngle: 120, color: '#4ECDC4' },
+  { verb: 'dürfen', startAngle: 120, endAngle: 180, color: '#45B7D1' },
+  { verb: 'sollen', startAngle: 180, endAngle: 240, color: '#FFA07A' },
+  { verb: 'wollen', startAngle: 240, endAngle: 300, color: '#98D8C8' },
+  { verb: 'mögen',  startAngle: 300, endAngle: 360, color: '#FFD93D' }
+];
+
+const QUESTIONS = {
+  können: [
+    { type:'multiple', question:'Ich ___ sehr gut Deutsch sprechen.', options:['muss','kann','will','darf'], correct:'kann' },
+    { type:'fill',     question:'___ du schwimmen?', correct:'kannst' },
+    { type:'multiple', question:'"können" ne demek?', options:['zorunda olmak','istemek','yapabilmek','izinli olmak'], correct:'yapabilmek' },
+    { type:'fill',     question:'Wir ___ morgen ins Kino gehen.', correct:'können' },
+    { type:'multiple', question:'Er ___ Gitarre spielen.', options:['könnt','kannst','können','kann'], correct:'kann' }
+  ],
+  müssen: [
+    { type:'multiple', question:'Ich ___ heute arbeiten.', options:['kann','will','muss','mag'], correct:'muss' },
+    { type:'fill',     question:'Du ___ deine Hausaufgaben machen.', correct:'musst' },
+    { type:'multiple', question:'"müssen" ne demek?', options:['yapabilmek','zorunda olmak','istemek','sevmek'], correct:'zorunda olmak' },
+    { type:'fill',     question:'Wir ___ pünktlich sein.', correct:'müssen' },
+    { type:'multiple', question:'Sie ___ zum Arzt gehen.', options:['müsst','musst','müssen','muss'], correct:'muss' }
+  ],
+  dürfen: [
+    { type:'multiple', question:'Ich ___ hier nicht rauchen.', options:['kann','muss','darf','will'], correct:'darf' },
+    { type:'fill',     question:'___ ich reinkommen?', correct:'darf' },
+    { type:'multiple', question:'"dürfen" ne demek?', options:['zorunda olmak','istemek','yapabilmek','izinli olmak'], correct:'izinli olmak' },
+    { type:'fill',     question:'Du ___ nicht so laut sein.', correct:'darfst' },
+    { type:'multiple', question:'Ihr ___ jetzt spielen gehen.', options:['darf','darfst','dürft','dürfen'], correct:'dürft' }
+  ],
+  sollen: [
+    { type:'multiple', question:'Ich ___ mehr lernen.', options:['kann','will','soll','darf'], correct:'soll' },
+    { type:'fill',     question:'Du ___ zum Lehrer gehen.', correct:'sollst' },
+    { type:'multiple', question:'"sollen" ne demek?', options:['zorunda olmak','istemek','yapması gerekmek/meli-malı','sevmek'], correct:'yapması gerekmek/meli-malı' },
+    { type:'fill',     question:'Wir ___ pünktlich kommen.', correct:'sollen' },
+    { type:'multiple', question:'Was ___ ich machen?', options:['sollt','sollst','sollen','soll'], correct:'soll' }
+  ],
+  wollen: [
+    { type:'multiple', question:'Ich ___ nach Hause gehen.', options:['kann','muss','will','darf'], correct:'will' },
+    { type:'fill',     question:'___ du mit mir kommen?', correct:'willst' },
+    { type:'multiple', question:'"wollen" ne demek?', options:['zorunda olmak','yapabilmek','istemek','sevmek'], correct:'istemek' },
+    { type:'fill',     question:'Wir ___ morgen ins Kino gehen.', correct:'wollen' },
+    { type:'multiple', question:'Sie ___ ein neues Auto kaufen.', options:['wollt','willst','will','wollen'], correct:'will' }
+  ],
+  mögen: [
+    { type:'multiple', question:'Ich ___ Pizza.', options:['kann','muss','mag','will'], correct:'mag' },
+    { type:'fill',     question:'___ du Schokolade?', correct:'magst' },
+    { type:'multiple', question:'"mögen" ne demek?', options:['zorunda olmak','istemek','sevmek/hoşlanmak','yapabilmek'], correct:'sevmek/hoşlanmak' },
+    { type:'fill',     question:'Wir ___ klassische Musik.', correct:'mögen' },
+    { type:'multiple', question:'Er ___ keine Tomaten.', options:['mögt','magst','mag','mögen'], correct:'mag' }
+  ]
+};
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let score = 0;
+let darts = [];
+let boardRotation = 0;
+let aimAngle = 0;
+let power = 0;
+let throwing = false;
+let currentDart = null;
+let maxDarts = null;
+let timeLeft = null;
+let timerActive = false;
+let timerInterval = null;
+let gameLoopId = null;
+let currentQuestion = null;
+
+// ─── TUTORIAL ────────────────────────────────────────────────────────────────
+(function startTutorial() {
+  const el = document.getElementById('tutorial-text');
+  const btn = document.getElementById('tutorial-btn');
+  let idx = 0;
+  const iv = setInterval(() => {
+    if (idx < FULL_TUTORIAL.length) {
+      el.textContent = FULL_TUTORIAL.slice(0, ++idx) + '|';
+    } else {
+      el.textContent = FULL_TUTORIAL;
+      clearInterval(iv);
+      btn.textContent = 'Başla! 🎯';
+      btn.classList.remove('waiting');
+      btn.classList.add('ready');
+      btn.disabled = false;
+    }
+  }, 20);
+})();
+
+function showModeScreen() {
+  document.getElementById('tutorial-screen').classList.add('hidden');
+  document.getElementById('mode-screen').classList.remove('hidden');
+}
+
+// ─── GAME LOOP & START ───────────────────────────────────────────────────────
+function startGameLoop() {
+  if (gameLoopId) cancelAnimationFrame(gameLoopId);
+  function loop() {
+    boardRotation = (boardRotation + 0.4) % 360;
+    drawGame();
+    gameLoopId = requestAnimationFrame(loop);
+  }
+  gameLoopId = requestAnimationFrame(loop);
+}
+
+function stopGameLoop() {
+  if (gameLoopId) {
+    cancelAnimationFrame(gameLoopId);
+    gameLoopId = null;
+  }
+}
+
+function startGame(dartCount) {
+  maxDarts = dartCount;
+  document.getElementById('mode-screen').classList.add('hidden');
+  document.getElementById('game-screen').classList.remove('hidden');
+  document.getElementById('hint-bar').style.display = 'flex'; // Reset hint bar visibility
+  updateHUD();
+
+  if (dartCount === 'timed') {
+    timeLeft = 120;
+    timerActive = true;
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      updateHUD();
+      if (timeLeft <= 0) {
+        timerActive = false;
+        clearInterval(timerInterval);
+        if (!currentQuestion) showGameOver();
+      }
+    }, 1000);
+  }
+
+  startGameLoop();
+}
+
+function updateHUD() {
+  document.getElementById('score-display').textContent = score;
+  const hd = document.getElementById('dart-hud');
+  if (maxDarts === 'timed') {
+    const m = Math.floor(timeLeft / 60);
+    const s = String(timeLeft % 60).padStart(2, '0');
+    hd.textContent = `⏱️ ${m}:${s}`;
+  } else {
+    hd.textContent = `🎯 ${darts.length}/${maxDarts}`;
+  }
+}
+
+function resetGame() {
+  clearInterval(timerInterval);
+  stopGameLoop();
+  
+  score = 0; darts = []; boardRotation = 0; aimAngle = 0; power = 0;
+  throwing = false; currentDart = null; maxDarts = null;
+  timeLeft = null; timerActive = false; currentQuestion = null;
+
+  document.getElementById('game-screen').classList.add('hidden');
+  document.getElementById('gameover-overlay').classList.add('hidden');
+  document.getElementById('question-overlay').classList.add('hidden');
+  document.getElementById('tutorial-screen').classList.remove('hidden');
+  document.getElementById('mode-screen').classList.add('hidden');
+
+  // re-run tutorial typewriter
+  const el = document.getElementById('tutorial-text');
+  const btn = document.getElementById('tutorial-btn');
+  el.textContent = '';
+  btn.textContent = 'Bekleyin...';
+  btn.classList.remove('ready'); btn.classList.add('waiting'); btn.disabled = true;
+  let idx = 0;
+  const iv = setInterval(() => {
+    if (idx < FULL_TUTORIAL.length) {
+      el.textContent = FULL_TUTORIAL.slice(0, ++idx) + '|';
+    } else {
+      el.textContent = FULL_TUTORIAL;
+      clearInterval(iv);
+      btn.textContent = 'Başla! 🎯';
+      btn.classList.remove('waiting'); btn.classList.add('ready'); btn.disabled = false;
+    }
+  }, 20);
+}
+
+// ─── CANVAS DRAW ─────────────────────────────────────────────────────────────
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const CX = canvas.width / 2, CY = 250, R = 180;
+
+function drawGame() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const bg = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bg.addColorStop(0, '#1a1a2e'); bg.addColorStop(1, '#16213e');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawBoard();
+
+  if (!throwing && !currentQuestion) drawAimLine();
+
+  darts.forEach(d => {
+    ctx.save();
+    ctx.translate(CX, CY);
+    ctx.rotate((boardRotation - d.boardRotationAtThrow) * Math.PI / 180);
+    ctx.translate(-CX, -CY);
+    drawDart(d.x, d.y, d.rotation);
+    ctx.restore();
+  });
+
+  if (currentDart) drawDart(currentDart.x, currentDart.y, currentDart.rotation);
+}
+
+function drawBoard() {
+  ctx.save();
+  ctx.translate(CX, CY); ctx.rotate(boardRotation * Math.PI / 180); ctx.translate(-CX, -CY);
+
+  ctx.beginPath(); ctx.arc(CX, CY, R + 10, 0, Math.PI * 2);
+  ctx.fillStyle = '#1a1a1a'; ctx.fill();
+
+  ctx.beginPath(); ctx.arc(CX, CY, R, 0, Math.PI * 2);
+  ctx.fillStyle = '#f0f0f0'; ctx.fill();
+
+  MODAL_VERBS.forEach(item => {
+    const sa = (item.startAngle - 90) * Math.PI / 180;
+    const ea = (item.endAngle   - 90) * Math.PI / 180;
+    ctx.beginPath(); ctx.moveTo(CX, CY); ctx.arc(CX, CY, R, sa, ea); ctx.closePath();
+    ctx.fillStyle = item.color; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+
+    const mid = ((item.startAngle + item.endAngle) / 2 - 90) * Math.PI / 180;
+    const tx = CX + Math.cos(mid) * R * 0.65;
+    const ty = CY + Math.sin(mid) * R * 0.65;
+    ctx.save();
+    ctx.translate(tx, ty); ctx.rotate(mid + Math.PI / 2);
+    ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 3; ctx.strokeText(item.verb, 0, 0);
+    ctx.fillStyle = '#fff'; ctx.fillText(item.verb, 0, 0);
+    ctx.restore();
+  });
+
+  // white inner ring
+  ctx.beginPath(); ctx.arc(CX, CY, R * 0.4, 0, Math.PI * 2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+
+  // dividers
+  for (let i = 0; i < 6; i++) {
+    const a = (i * 60 - 90) * Math.PI / 180;
+    ctx.beginPath(); ctx.moveTo(CX, CY);
+    ctx.lineTo(CX + Math.cos(a) * R, CY + Math.sin(a) * R);
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 2; ctx.stroke();
+  }
+
+  // bullseye
+  const bg2 = ctx.createRadialGradient(CX, CY, 0, CX, CY, R * 0.15);
+  bg2.addColorStop(0, '#FFD700'); bg2.addColorStop(1, '#FFA500');
+  ctx.beginPath(); ctx.arc(CX, CY, R * 0.15, 0, Math.PI * 2);
+  ctx.fillStyle = bg2; ctx.fill();
+  ctx.strokeStyle = '#8B4513'; ctx.lineWidth = 3; ctx.stroke();
+
+  ctx.beginPath(); ctx.arc(CX, CY, 5, 0, Math.PI * 2);
+  ctx.fillStyle = '#8B4513'; ctx.fill();
+
+  ctx.restore();
+}
+
+function drawAimLine() {
+  const a = aimAngle * Math.PI / 180;
+  const len = 150;
+  const ex = CX + Math.sin(a) * len, ey = 550 - Math.cos(a) * len;
+  ctx.beginPath(); ctx.moveTo(CX, 550); ctx.lineTo(ex, ey);
+  ctx.strokeStyle = 'rgba(255,0,0,0.5)'; ctx.lineWidth = 3;
+  ctx.setLineDash([10, 5]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(ex, ey, 8, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(255,0,0,0.7)'; ctx.fill();
+}
+
+function drawDart(x, y, rotation) {
+  ctx.save(); ctx.translate(x, y); ctx.rotate(rotation);
+  const bg = ctx.createLinearGradient(0, -30, 0, 10);
+  bg.addColorStop(0, '#c0c0c0'); bg.addColorStop(0.5, '#808080'); bg.addColorStop(1, '#606060');
+  ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(-3, 10); ctx.lineTo(3, 10); ctx.closePath();
+  ctx.fillStyle = bg; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0, -30); ctx.lineTo(-2, -25); ctx.lineTo(2, -25); ctx.closePath();
+  ctx.fillStyle = '#4a4a4a'; ctx.fill();
+  // flights
+  ctx.beginPath(); ctx.moveTo(-3,10); ctx.lineTo(-12,5); ctx.lineTo(-10,15); ctx.closePath();
+  ctx.fillStyle = '#FF6B6B'; ctx.fill(); ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3,10); ctx.lineTo(12,5); ctx.lineTo(10,15); ctx.closePath();
+  ctx.fillStyle = '#4ECDC4'; ctx.fill(); ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+}
+
+// ─── THROW ────────────────────────────────────────────────────────────────────
+function throwDart() {
+  if (maxDarts !== 'timed' && darts.length >= maxDarts) return;
+  if (maxDarts === 'timed' && (!timerActive || timeLeft <= 0)) return;
+
+  throwing = true;
+  const sX = CX, sY = 550;
+  const angle = aimAngle * Math.PI / 180;
+  const dist = Math.pow(power / 100, 1.5) * 180;
+  const spread = (Math.random() - 0.5) * 0.05;
+  const fX = CX + Math.sin(angle + spread) * dist;
+  const fY = CY - Math.cos(angle + spread) * dist;
+  const rotAtThrow = boardRotation;
+
+  const startTime = Date.now();
+  const duration = 800;
+
+  function animate() {
+    const elapsed = Date.now() - startTime;
+    const p = Math.min(elapsed / duration, 1);
+    const ep = 1 - Math.pow(1 - p, 3);
+    currentDart = {
+      x: sX + (fX - sX) * ep,
+      y: sY + (fY - sY) * ep,
+      rotation: angle + spread + Math.PI
+    };
+    
+    if (p < 1) { 
+        requestAnimationFrame(animate); 
+        return; 
+    }
+
+    const dart = { x: fX, y: fY, rotation: angle + spread + Math.PI, boardRotationAtThrow: rotAtThrow };
+    darts.push(dart);
+    currentDart = null;
+    throwing = false;
+    updateHUD();
+
+    const dx = fX - CX, dy = fY - CY;
+    const dist2 = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist2 <= 27) {
+      score += 50; updateHUD();
+      checkGameOver();
+    } else if (dist2 <= R) {
+      let a = Math.atan2(dx, -dy) * 180 / Math.PI;
+      if (a < 0) a += 360;
+      const adj = (a - rotAtThrow + 360) % 360;
+      const hit = MODAL_VERBS.find(v => adj >= v.startAngle && adj < v.endAngle);
+      if (hit && QUESTIONS[hit.verb]) {
+        const pool = QUESTIONS[hit.verb];
+        currentQuestion = { ...pool[Math.floor(Math.random() * pool.length)], verb: hit.verb };
+        showQuestion();
+      } else { checkGameOver(); }
+    } else { checkGameOver(); }
+  }
+  animate();
+}
+
+function checkGameOver() {
+  if (maxDarts !== 'timed' && darts.length >= maxDarts) { showGameOver(); return; }
+  if (maxDarts === 'timed' && timeLeft <= 0) { showGameOver(); }
+}
+
+function showGameOver() {
+  clearInterval(timerInterval); 
+  stopGameLoop();
+  document.getElementById('gameover-title').textContent = maxDarts === 'timed' ? 'Süre Doldu!' : 'Oyun Bitti!';
+  document.getElementById('final-score').textContent = score;
+  document.getElementById('gameover-overlay').classList.remove('hidden');
+}
+
+// ─── QUESTION UI ─────────────────────────────────────────────────────────────
+function showQuestion() {
+  const q = currentQuestion;
+  document.getElementById('question-verb').textContent = q.verb.toUpperCase();
+  document.getElementById('question-text').textContent = q.question;
+  document.getElementById('feedback-box').classList.add('hidden');
+
+  const area = document.getElementById('options-area');
+  area.innerHTML = '';
+
+  if (q.type === 'multiple') {
+    const grid = document.createElement('div');
+    grid.className = 'options-grid';
+    q.options.forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => handleOption(opt);
+      grid.appendChild(btn);
+    });
+    area.appendChild(grid);
+  } else {
+    const inp = document.createElement('input');
+    inp.id = 'fill-input'; inp.type = 'text'; inp.placeholder = 'Cevabını yaz...';
+    inp.onkeypress = e => { if (e.key === 'Enter') handleFill(); };
+    area.appendChild(inp);
+    const btn = document.createElement('button');
+    btn.id = 'submit-btn'; btn.textContent = 'Cevabı Gönder';
+    btn.onclick = handleFill;
+    area.appendChild(btn);
+  }
+
+  document.getElementById('question-overlay').classList.remove('hidden');
+}
+
+function handleOption(opt) {
+  const correct = opt === currentQuestion.correct;
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.disabled = true;
+    if (b.textContent === currentQuestion.correct) b.classList.add('correct');
+    else b.classList.add('wrong');
+  });
+  showFeedback(correct);
+}
+
+function handleFill() {
+  const inp = document.getElementById('fill-input');
+  if (!inp || !inp.value.trim()) return;
+  const correct = inp.value.trim().toLowerCase() === currentQuestion.correct.toLowerCase();
+  inp.disabled = true;
+  const btn = document.getElementById('submit-btn');
+  if (btn) btn.disabled = true;
+  showFeedback(correct);
+}
+
+function showFeedback(correct) {
+  if (correct) score += 20; else score -= 5;
+  updateHUD();
+  const fb = document.getElementById('feedback-box');
+  fb.className = 'feedback-box ' + (correct ? 'correct' : 'wrong');
+  fb.innerHTML = `<div class="fb-row">${correct
+    ? '<span style="font-size:2rem">✅</span><span class="fb-title">DOĞRU! +20 Puan</span>'
+    : `<span style="font-size:2rem">❌</span><span class="fb-title">YANLIŞ! -5 Puan</span>`}
+  </div>${!correct ? `<p class="fb-answer">Doğru cevap: <strong>${currentQuestion.correct}</strong></p>` : ''}`;
+  fb.classList.remove('hidden');
+
+  setTimeout(() => {
+    document.getElementById('question-overlay').classList.add('hidden');
+    currentQuestion = null;
+    checkGameOver();
+  }, 2000);
+}
+
+// ─── JOYSTICK ─────────────────────────────────────────────────────────────────
+const jBase = document.getElementById('joystick-base');
+const jKnob = document.getElementById('joystick-knob');
+let jActive = false, jBounds = null;
+
+function onJoyStart(e) {
+  if (throwing || currentQuestion) return;
+  
+  // Joystick'e dokunulduğunda ipucu kutusunu gizle
+  document.getElementById('hint-bar').style.display = 'none';
+  
+  jActive = true;
+  jBounds = jBase.getBoundingClientRect();
+  onJoyMove(e);
+}
+function onJoyMove(e) {
+  if (!jActive) return;
+  const t = e.touches ? e.touches[0] : e;
+  const cx = jBounds.left + jBounds.width / 2;
+  const cy = jBounds.top  + jBounds.height / 2;
+  let dx = t.clientX - cx, dy = t.clientY - cy;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+  const max = 50;
+  if (dist > max) { dx = dx/dist*max; dy = dy/dist*max; }
+  jKnob.style.transform = `translate(${dx}px,${dy}px)`;
+  const nx = dx/max, ny = dy/max;
+  aimAngle = Math.atan2(nx, -ny) * 180 / Math.PI;
+  power = Math.min(100, (Math.sqrt(dx*dx+dy*dy)/max)*100);
+}
+function onJoyEnd() {
+  if (!jActive) return;
+  jActive = false;
+  jKnob.style.transform = 'translate(0,0)';
+  if (power > 10 && !throwing && !currentQuestion) throwDart();
+  power = 0;
+}
+
+jBase.addEventListener('mousedown', onJoyStart);
+document.addEventListener('mousemove', onJoyMove);
+document.addEventListener('mouseup', onJoyEnd);
+jBase.addEventListener('touchstart', e => { e.preventDefault(); onJoyStart(e); }, {passive:false});
+jBase.addEventListener('touchmove', e => { e.preventDefault(); onJoyMove(e); }, {passive:false});
+jBase.addEventListener('touchend', onJoyEnd);
+</script>
+</body>
+</html>
