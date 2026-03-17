@@ -9,13 +9,10 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
   html, body {
-    position: fixed;
-    top: 0;
-    left: 0;
     width: 100%;
-    height: 100%;
-    overflow: hidden;
-    touch-action: none;
+    height: 100vh;
+    overflow: hidden; /* Kaydırmayı engeller */
+    touch-action: none; /* Mobilde kaydırma hareketlerini tamamen durdurur */
     overscroll-behavior: none;
   }
 
@@ -23,15 +20,15 @@
     background: linear-gradient(to bottom, #111827, #1f2937);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    font-family: Arial, sans-serif;
+    font-family: Arial, sans-serif; position: relative;
   }
 
   /* TUTORIAL */
   #tutorial-screen {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-    padding: 2rem; max-width: 42rem; width: 100%; max-height: 95vh;
-    border: 4px solid #818cf8; display: flex; flex-direction: column;
+    padding: 2rem; max-width: 42rem; width: 100%;
+    border: 4px solid #818cf8;
   }
   #tutorial-screen h1 { font-size: 1.875rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 1.5rem; }
   #tutorial-box {
@@ -55,8 +52,8 @@
   #mode-screen {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-    padding: 3rem; max-width: 42rem; width: 100%; max-height: 95vh;
-    border: 4px solid #818cf8; text-align: center; overflow-y: auto;
+    padding: 3rem; max-width: 42rem; width: 100%;
+    border: 4px solid #818cf8; text-align: center;
   }
   #mode-screen h1 { font-size: 2.25rem; font-weight: 700; color: #fff; margin-bottom: 2rem; }
   #mode-screen p { font-size: 1.25rem; color: #fff; margin-bottom: 2rem; }
@@ -73,13 +70,8 @@
   .mode-btn.purple { background: linear-gradient(to right, #a855f7, #ec4899); }
 
   /* GAME SCREEN */
-  #game-screen { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-  #gameCanvas { 
-    max-width: 100vw; 
-    max-height: 100vh; 
-    object-fit: contain;
-    border: 4px solid #374151; border-radius: 0.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5); 
-  }
+  #game-screen { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #gameCanvas { border: 4px solid #374151; border-radius: 0.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
 
   /* HUD */
   #hud {
@@ -140,7 +132,7 @@
   #question-box {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
-    padding: 2rem; max-width: 42rem; width: 100%; border: 4px solid #818cf8; max-height: 95vh; overflow-y: auto;
+    padding: 2rem; max-width: 42rem; width: 100%; border: 4px solid #818cf8;
   }
   #question-verb {
     display: inline-block; background: #facc15; color: #111827;
