@@ -9,10 +9,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   
   html, body {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
     width: 100%;
-    height: 100vh;
-    overflow: hidden; /* Kaydırmayı engeller */
-    touch-action: none; /* Mobilde kaydırma hareketlerini tamamen durdurur */
+    height: 100%;
+    height: 100dvh; /* Mobil tarayıcı çubuklarına göre kendini ayarlayan yükseklik */
+    overflow: hidden;
+    touch-action: none;
     overscroll-behavior: none;
   }
 
@@ -20,7 +23,7 @@
     background: linear-gradient(to bottom, #111827, #1f2937);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    font-family: Arial, sans-serif; position: relative;
+    font-family: Arial, sans-serif;
   }
 
   /* TUTORIAL */
@@ -29,6 +32,7 @@
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     padding: 2rem; max-width: 42rem; width: 100%;
     border: 4px solid #818cf8;
+    max-height: 95%; overflow-y: auto;
   }
   #tutorial-screen h1 { font-size: 1.875rem; font-weight: 700; color: #fff; text-align: center; margin-bottom: 1.5rem; }
   #tutorial-box {
@@ -54,6 +58,7 @@
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     padding: 3rem; max-width: 42rem; width: 100%;
     border: 4px solid #818cf8; text-align: center;
+    max-height: 95%; overflow-y: auto;
   }
   #mode-screen h1 { font-size: 2.25rem; font-weight: 700; color: #fff; margin-bottom: 2rem; }
   #mode-screen p { font-size: 1.25rem; color: #fff; margin-bottom: 2rem; }
@@ -70,13 +75,20 @@
   .mode-btn.purple { background: linear-gradient(to right, #a855f7, #ec4899); }
 
   /* GAME SCREEN */
-  #game-screen { position: relative; width: 100%; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #game-screen { 
+    position: absolute; inset: 0; 
+    width: 100%; height: 100%; 
+    display: flex; align-items: center; justify-content: center; 
+    overflow: hidden; 
+  }
+  /* Dart boyutuna dokunulmadı */
   #gameCanvas { border: 4px solid #374151; border-radius: 0.5rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
 
-  /* HUD */
+  /* HUD - Doğrudan ekrana sabitlendi */
   #hud {
-    position: absolute; bottom: 2rem; left: 2rem;
-    display: flex; flex-direction: column; gap: 0.75rem; z-index: 10;
+    position: fixed; 
+    bottom: 2rem; left: 1rem;
+    display: flex; flex-direction: column; gap: 0.75rem; z-index: 50;
   }
   .hud-badge {
     padding: 0.5rem 1rem; border-radius: 0.5rem;
@@ -93,20 +105,24 @@
   }
   .hud-badge.reset-btn:hover { transform: scale(1.05); }
 
-  /* HINT */
+  /* HINT - Doğrudan ekrana sabitlendi */
   #hint-bar {
-    position: absolute; bottom: 13rem;
-    background: rgba(0,0,0,0.7); padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem; display: flex; align-items: center; gap: 1rem; z-index: 10;
+    position: fixed; 
+    bottom: 12rem;
+    left: 50%; transform: translateX(-50%);
+    width: max-content; max-width: 90%;
+    background: rgba(0,0,0,0.8); padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; z-index: 50;
   }
-  #hint-bar p { color: #fff; }
+  #hint-bar p { color: #fff; font-size: 0.9rem; }
   #hint-bar span { color: #a78bfa; font-weight: 700; }
   #hint-close { color: #fff; background: none; border: none; cursor: pointer; font-size: 1.2rem; }
   #hint-close:hover { color: #f87171; }
 
-  /* JOYSTICK */
+  /* JOYSTICK - Doğrudan ekrana sabitlendi */
   #joystick-wrap {
-    position: absolute; bottom: 2rem; right: 2rem; z-index: 10;
+    position: fixed; 
+    bottom: 2rem; right: 1rem; z-index: 50;
   }
   #joystick-base {
     width: 9rem; height: 9rem;
@@ -125,14 +141,15 @@
 
   /* QUESTION OVERLAY */
   #question-overlay {
-    position: absolute; inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.8);
-    display: flex; align-items: center; justify-content: center; z-index: 20; padding: 1rem;
+    display: flex; align-items: center; justify-content: center; z-index: 60; padding: 1rem;
   }
   #question-box {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     padding: 2rem; max-width: 42rem; width: 100%; border: 4px solid #818cf8;
+    max-height: 95%; overflow-y: auto;
   }
   #question-verb {
     display: inline-block; background: #facc15; color: #111827;
@@ -171,14 +188,15 @@
 
   /* GAME OVER */
   #gameover-overlay {
-    position: absolute; inset: 0;
+    position: fixed; inset: 0;
     background: rgba(0,0,0,0.8);
-    display: flex; align-items: center; justify-content: center; z-index: 20;
+    display: flex; align-items: center; justify-content: center; z-index: 60;
   }
   #gameover-box {
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-radius: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.5);
     padding: 3rem; max-width: 42rem; width: 100%; border: 4px solid #818cf8; text-align: center;
+    max-height: 95%; overflow-y: auto;
   }
   #gameover-box h2 { font-size: 2.25rem; font-weight: 700; color: #fff; margin: 1.5rem 0 1rem; }
   #gameover-box p { font-size: 1.875rem; color: #fff; margin-bottom: 2rem; }
